@@ -61,3 +61,47 @@ EnerGeo는 Large Language Model (LLM) 기반 음성 인터페이스와 지리공
 
 ### Modular System Architecture
 향후 해상풍력 및 태양광 발전 요소와 연동 가능한 모듈형 설계
+
+<br/>
+<br/>
+
+## Commit Message Rules / 커밋 메시지 규칙
+### 커밋 메시지 템플릿
+```
+<커밋 유형>[선택사항: 코드 범위나 모듈 명]: 간단한 변경 사항 설명
+
+[선택사항: 자세한 변경 사항 설명]
+
+[선택사항: 부가 정보 설명]
+```
+
+### 커밋 유형 목록
+| 커밋 유형| 설명                                            |
+| -------- | ------------------------------------------------|
+| feat     | 새로운 기능 추가                                 |
+| fix      | 버그 수정                                        |
+| docs     | 문서 변경 (README, 주석 등)                      |
+| style    | 코드 포맷팅, 세미콜론 누락 등 기능에 영향 없는 변경 |
+| refactor | 코드 리팩토링 (기능 변화 없음)                    |
+| test     | 테스트 코드 추가 또는 수정                        |
+| chore    | 빌드 업무, 패키지 매니저 설정 등 기타 변경         |
+
+### 기타 규칙
+1. 제목은 50자 이하로 간결하게 작성합니다.
+3. 영어로 작성할 경우, 제목 첫 글자는 소문자로 시작하고, 끝에 마침표를 찍지 않습니다.
+5. 변경 이유나 추가 설명이 필요한 경우 본문에 자유롭게 기술하세요.
+6. 부가 정보(푸터)에는 이슈 번호나 브레이킹 체인지가 있다면 명시합니다.
+
+### 예시
+```
+feat(weapon): add support for two-handed weapons
+
+- Blend idle and run animations based on the equipped weapon types.
+- Change weapon1 and weapon2's type from one-handed to two-handed weapon.
+- Add long spear for new two-handed weapon using different anime pose.
+
+Fixes: #7
+Resolves: #6
+```
+
+더 자세한 규칙은 [Conventional Commits v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/#specification)을 따릅니다.
