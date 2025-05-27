@@ -4,9 +4,12 @@ namespace RemoteObject
 {
     public class RemoteCommandMessage
     {
-        public string ID { get; }
+        public RemoteCommandMessage()
+        {
+        }
 
-        public List<StateChangeCommand> StateChangeCommands;
-        public List<ActionCommand> ActionCommands;
+        public string TargetRemoteObjectID;
+        public List<StateChangeCommand> StateChangeCommands = null;
+        public List<ActionCommand> ActionCommands = null;
     }
 }

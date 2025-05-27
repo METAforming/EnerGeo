@@ -1,7 +1,20 @@
-﻿namespace RemoteObject
+﻿using System.Collections.Generic;
+
+namespace RemoteObject
 {
-    public class StateChangeCommand
+    /// <summary>
+    /// LLM으로부터 전달 받은 객체 상태 정보 구조체
+    /// </summary>
+    public struct StateChangeCommand
     {
-        // TODO: 원격 객체 상태 정보를 변경하기 위한 명령 정보 구조 정읜
+        /// <summary>
+        /// 호출할 State method id(Name)
+        /// </summary>
+        public string StateMethodID;
+
+        /// <summary>
+        /// State method를 호출할 때 전달할 파라미터 목록
+        /// </summary>
+        public List<dynamic> Parameters;
     }
 }

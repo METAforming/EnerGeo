@@ -2,16 +2,18 @@
 
 namespace RemoteObject
 {
-    public class ActionCommand
+    /// <summary>
+    /// LLM으로부터 전달 받은 명령 정보 구조체
+    /// </summary>
+    public struct ActionCommand
     {
-        public ActionCommand(string actionName)
-        {
-            ActionName = actionName;
-        }
-        
-        public string ActionName;
-        // TODO: 지금은 특정 Action을 수행하기 위한 parameter명과 실제 값을 모두 string으로 처리
-        // 일반화 가능하고 최적화 방법 고안 필요
-        public Dictionary<string, string> Parameters;
+        /// <summary>
+        /// 호출할 Action method id(Name)
+        /// </summary>
+        public string ActionMethodID;
+        /// <summary>
+        /// Action method를 호출할 때 전달하는 파라미터 목록
+        /// </summary>
+        public List<dynamic> Parameters;
     }
 }
