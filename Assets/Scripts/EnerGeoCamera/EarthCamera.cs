@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using CesiumForUnity;
@@ -10,14 +11,70 @@ namespace EnerGeoCamera
     public class EarthCamera : MonoBehaviour
     {
         #region Customizable Variables
+        [Header("Camera Component")]
         [SerializeField]
         private bool _enableMovement;
+        
+        public bool EnableMovement
+        {
+            get => _enableMovement;
+            set => _enableMovement = value;
+        }
+        
+        [SerializeField]
+        private float _initialViewWidth;
+        [SerializeField]
+        private float _initialViewHeight;
+        
+        [Space]
+        
+        [SerializeField]
+        private InputActionProperty _moveAction;
+        [SerializeField]
+        private InputActionProperty _zoomAction;
+        
+        [Header("Camera Movement")]
+        [SerializeField]
+        [Min(0.0f)]
+        private float _maxSpeed = 100.0f;
+        
+        [SerializeField]
+        [Min(0.1f)]
+        private float _acceleration = 1.0f;
+        
+        [SerializeField]
+        [Min(0.1f)]
+        private float _deceleration = 0.1f;
         #endregion
         
+        #region Event Functions
         protected void Awake()
         {
+            _georeference = GetComponentInParent<CesiumGeoreference>();
+            if (_georeference is null)
+            {
+                #if UNITY_EDITOR
+                Debug.LogError("EarthCamera must be nested under a game object with a CesiumGeoreference.");
+                #endif 
+            }
+
+            _globeAnchor = GetComponentInParent<CesiumGlobeAnchor>();
+            if (_globeAnchor is null)
+            {
+                Debug.LogError("EarthCamera must be nested under a game object with a CesiumGlobeAnchor");
+            }
+
+            CesiumOriginShift originShift = _globeAnchor.GetComponent<CesiumOriginShift>();
+            if (originShift is null)
+            {
+                Debug.LogError($"EarthCamera expects a CesiumOriginShift on {_globeAnchor?.name}, none found");
+            }
+            
             InitializeCamera();
+            InitializeController();
+            ConfigureInputs();
         }
+        #endregion
 
         #region Intialization
         private void InitializeCamera()
@@ -37,10 +94,23 @@ namespace EnerGeoCamera
             } 
         }
         #endregion
+        
+        #region Update
 
+        private void FixedUpdate()
+        {
+            HandlePlayerInput();
+        }
+
+        #endregion
+
+        #region Player Inputs
         private void HandlePlayerInput()
         {
             Vector2 moveDelta = _moveAction.action.ReadValue<Vector2>();
+            #if UNITY_EDITOR
+            Debug.Log(moveDelta);
+            #endif 
 
             float inputUp = moveDelta.y;
             float inputRight = moveDelta.x;
@@ -79,10 +149,14 @@ namespace EnerGeoCamera
                     _velocity += directionChange * _velocity.magnitude * Time.fixedDeltaTime;
                     _velocity = Vector3.ClampMagnitude(_velocity, _maxSpeed);
                 }
+                
+                // TODO: calculate velocity based
+                _velocity += inputDirection * _acceleration * Time.fixedDeltaTime;
+                _velocity = Vector3.ClampMagnitude(_velocity, _maxSpeed);
             }
             else
             {
-                float speed = Mathf.Max(_velocity.magnitude, 0.0f);
+                float speed = Mathf.Max(_velocity.magnitude - _deceleration, 0.0f);
                 _velocity = Vector3.ClampMagnitude(_velocity, speed);
             }
 
@@ -108,41 +182,39 @@ namespace EnerGeoCamera
 
             if (!HasInputAction(_moveAction))
             {
-                InputAction newMoveAction = map.AddAction("move", binding: "<Gamepad>/leftStick");
-                newMoveAction.AddCompositeBinding("Dpad")
+                // 기본적으로 왼손 VR 컨트롤러로 조작
+                InputAction newMoveAction = map.AddAction("move", binding: "<XRController>{LeftHand}/thumbstick");
+                // 키보드 조작 추가
+                newMoveAction.AddCompositeBinding("2DVector")
                     .With("Up", "<Keyboard>/w")
                     .With("Down", "<Keyboard>/s")
                     .With("Left", "<Keyboard>/a")
-                    .With("Right", "<Keyboard>/d")
-                    .With("Up", "<Keyboard>/upArrow")
-                    .With("Down", "<Keyboard>/downArrow")
-                    .With("Left", "<Keyboard>/leftArrow")
-                    .With("Right", "<Keyboard>/rightArrow");
+                    .With("Right", "<Keyboard>/d");
                 _moveAction = new InputActionProperty(newMoveAction);
             }
-        }
 
+            if (!HasInputAction(_zoomAction))
+            {
+                InputAction newZoomAction = map.AddAction("zoom", binding: "<XRController>{RightHand}/thumbstick");
+                newZoomAction.AddCompositeBinding("Axis")
+                    .With("Negative", "<Keyboard>/o")
+                    .With("Positive", "<Keyboard>/i");
+                _zoomAction = new InputActionProperty(newZoomAction);
+            }
+            
+            _moveAction.action.Enable();
+            _zoomAction.action.Enable();
+        }
+        #endregion
+        
         private Camera _camera;
-        private float _initialViewWidth;
-        private float _initialViewHeight;
 
         private CharacterController _controller;
         private CesiumGeoreference _georeference;
         private CesiumGlobeAnchor _globeAnchor;
 
+        // private CurveF
         private Vector3 _velocity = Vector3.zero;
-        private float _maxSpeed = 100.0f;
         
-        private InputActionProperty _moveAction;
-        private InputActionProperty _zoomAction;
-
-        public bool EnableMovement
-        {
-            get => _enableMovement;
-            set
-            {
-                _enableMovement = value;
-            }
-        }
     }
 }
