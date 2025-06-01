@@ -11,51 +11,53 @@ namespace EnerGeoCamera
     public class EarthCamera : MonoBehaviour
     {
         #region Customizable Variables
-        [Header("Camera Component")]
-        [SerializeField]
+
+        [Header("Camera Component")] [SerializeField]
         private bool _enableMovement;
-        
+
+        private bool _enableRotation;
+
         public bool EnableMovement
         {
             get => _enableMovement;
             set => _enableMovement = value;
         }
+
+        public bool EnableRotation
+        {
+            get => _enableRotation;
+            set => _enableRotation = value;
+        }
         
-        [SerializeField]
-        private float _initialViewWidth;
-        [SerializeField]
-        private float _initialViewHeight;
+
+        [SerializeField] private float _initialViewWidth;
+        [SerializeField] private float _initialViewHeight;
+
+        [Space] 
         
-        [Space]
-        
-        [SerializeField]
-        private InputActionProperty _moveAction;
-        [SerializeField]
-        private InputActionProperty _zoomAction;
-        
-        [Header("Camera Movement")]
-        [SerializeField]
-        [Min(0.0f)]
-        private float _maxSpeed = 100.0f;
-        
-        [SerializeField]
-        [Min(0.1f)]
-        private float _acceleration = 1.0f;
-        
-        [SerializeField]
-        [Min(0.1f)]
-        private float _deceleration = 0.1f;
+        [SerializeField] private InputActionProperty _moveAction;
+        [SerializeField] private InputActionProperty _zoomAction;
+        [SerializeField] private InputActionProperty _lookAction;
+
+        [Header("Camera Movement")] [SerializeField] [Min(0.0f)]
+        private float _maxSpeed = 100000.0f;
+
+        [SerializeField] [Min(0.1f)] private float _acceleration = 100000.0f;
+
+        [SerializeField] [Min(0.1f)] private float _deceleration = 99999.0f;
+
         #endregion
-        
+
         #region Event Functions
+
         protected void Awake()
         {
             _georeference = GetComponentInParent<CesiumGeoreference>();
             if (_georeference is null)
             {
-                #if UNITY_EDITOR
+#if UNITY_EDITOR
                 Debug.LogError("EarthCamera must be nested under a game object with a CesiumGeoreference.");
-                #endif 
+#endif
             }
 
             _globeAnchor = GetComponentInParent<CesiumGlobeAnchor>();
@@ -69,14 +71,29 @@ namespace EnerGeoCamera
             {
                 Debug.LogError($"EarthCamera expects a CesiumOriginShift on {_globeAnchor?.name}, none found");
             }
-            
+
             InitializeCamera();
             InitializeController();
             ConfigureInputs();
         }
+
+        private void Reset()
+        {
+            CesiumGlobeAnchor anchor = GetComponentInParent<CesiumGlobeAnchor>() ??
+                                       gameObject.AddComponent<CesiumGlobeAnchor>();
+            CesiumOriginShift origin = anchor.GetComponent<CesiumOriginShift>() ??
+                                       anchor.gameObject.AddComponent<CesiumOriginShift>();
+        }
+
+        private void FixedUpdate()
+        {
+            HandlePlayerInput();
+        }
+
         #endregion
 
         #region Intialization
+
         private void InitializeCamera()
         {
             _camera = gameObject.GetComponent<Camera>();
@@ -90,55 +107,50 @@ namespace EnerGeoCamera
             if (_globeAnchor.GetComponent<CharacterController>() != null)
             {
                 _controller = _globeAnchor.GetComponent<CharacterController>();
+            }
+            else
+            {
+                _controller = _globeAnchor.gameObject.AddComponent<CharacterController>();
                 _controller.hideFlags = HideFlags.HideInInspector;
-            } 
-        }
-        #endregion
-        
-        #region Update
-
-        private void FixedUpdate()
-        {
-            HandlePlayerInput();
+            }
         }
 
         #endregion
 
         #region Player Inputs
+
         private void HandlePlayerInput()
         {
             Vector2 moveDelta = _moveAction.action.ReadValue<Vector2>();
-            #if UNITY_EDITOR
-            Debug.Log(moveDelta);
-            #endif 
 
             float inputUp = moveDelta.y;
             float inputRight = moveDelta.x;
 
             float zoomIn = _zoomAction.action.ReadValue<float>();
 
-            Vector3 movementInput = new Vector3(inputRight, inputUp, zoomIn);
+            Vector3 movementInput = new Vector3(inputRight, inputUp, -zoomIn);
 
             if (_enableMovement)
             {
                 Move(movementInput);
             }
         }
-        
+
         private void Move(Vector3 movementInput)
         {
-            Vector3 inputDirection = transform.right * movementInput.x + transform.forward * movementInput.z;
+            Vector3 inputDirection = transform.right * movementInput.x + transform.up * movementInput.y;
+            Debug.Log("movementInput: " + movementInput + ", inputDirection: " + inputDirection);
 
             // Georeference 클래스가
             // 지구 중심 좌표계(Earth-Center Earth-Fixed, ECEF)에서
             // Unity 좌표계로 변환
-            if (_georeference != null)
+            if (_georeference)
             {
                 double3 positionECEF = _globeAnchor.positionGlobeFixed;
                 double3 upECEF = _georeference.ellipsoid.GeodeticSurfaceNormal(positionECEF);
                 double3 upUnity = _georeference.TransformEarthCenteredEarthFixedDirectionToUnity(upECEF);
 
-                inputDirection = (float3)inputDirection + (float3)upUnity * movementInput.y;
+                inputDirection = (float3)inputDirection + (float3)upUnity * movementInput.z;
             }
 
             if (inputDirection != Vector3.zero)
@@ -147,14 +159,13 @@ namespace EnerGeoCamera
                 {
                     Vector3 directionChange = inputDirection - _velocity.normalized;
                     _velocity += directionChange * _velocity.magnitude * Time.fixedDeltaTime;
-                    _velocity = Vector3.ClampMagnitude(_velocity, _maxSpeed);
                 }
-                
-                // TODO: calculate velocity based
+
                 _velocity += inputDirection * _acceleration * Time.fixedDeltaTime;
                 _velocity = Vector3.ClampMagnitude(_velocity, _maxSpeed);
             }
             else
+
             {
                 float speed = Mathf.Max(_velocity.magnitude - _deceleration, 0.0f);
                 _velocity = Vector3.ClampMagnitude(_velocity, speed);
@@ -164,13 +175,13 @@ namespace EnerGeoCamera
             {
                 _controller.Move(_velocity * Time.fixedDeltaTime);
 
-                if (_globeAnchor.detectTransformChanges)
+                if (!_globeAnchor.detectTransformChanges)
                 {
                     _globeAnchor.Sync();
                 }
             }
         }
-        
+
         private bool HasInputAction(InputActionProperty property)
         {
             return (property.action != null && property.action.bindings.Any()) || (property.reference is not null);
@@ -201,12 +212,18 @@ namespace EnerGeoCamera
                     .With("Positive", "<Keyboard>/i");
                 _zoomAction = new InputActionProperty(newZoomAction);
             }
-            
+
+            if (!HasInputAction(_lookAction))
+            {
+                // InputAction newLokkAction = map.AddAction("look", binding: )
+            }
+
             _moveAction.action.Enable();
             _zoomAction.action.Enable();
         }
+
         #endregion
-        
+
         private Camera _camera;
 
         private CharacterController _controller;
@@ -215,6 +232,5 @@ namespace EnerGeoCamera
 
         // private CurveF
         private Vector3 _velocity = Vector3.zero;
-        
     }
 }
