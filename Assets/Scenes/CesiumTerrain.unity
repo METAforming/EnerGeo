@@ -133,6 +133,7 @@ GameObject:
   - component: {fileID: 280452464}
   - component: {fileID: 280452463}
   - component: {fileID: 280452462}
+  - component: {fileID: 280452465}
   m_Layer: 0
   m_Name: CesiumGeoreference
   m_TagString: Untagged
@@ -197,6 +198,29 @@ Transform:
   - {fileID: 2137633576}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &280452465
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 280452461}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f1f2af4e51e0f94287fda301989aa9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _cameraFlyController: {fileID: 497174992}
+  _markers:
+  - longitude: 126.3124
+    latitude: 33.945259
+    height: 40
+  - longitude: 126.889957
+    latitude: 37.713432
+    height: 60
+  _viewAngle:
+  - {x: -30, y: 20}
+  - {x: -30, y: 20}
 --- !u!1 &497174984
 GameObject:
   m_ObjectHideFlags: 0
@@ -228,7 +252,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 497174984}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.6427876, y: 1.15901844e-10, z: -1.7445224e-11, w: 0.7660445}
+  m_LocalRotation: {x: 0.6427876, y: 1.159019e-10, z: -1.7445176e-11, w: 0.7660445}
   m_LocalPosition: {x: 0.0026832963, y: 0.012837407, z: 0.007340442}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -265,8 +289,8 @@ MonoBehaviour:
   _localToGlobeFixedMatrix:
     c0:
       x: -0.7986343869671132
-      y: -0.6018165135268917
-      z: -0.00000000009139154909395242
+      y: -0.6018165135268915
+      z: -0.00000000009139148629171011
       w: 0
     c1:
       x: 0.2601620025396919
@@ -274,12 +298,12 @@ MonoBehaviour:
       z: 0.9017324892790737
       w: 0
     c2:
-      x: 0.5426775028634097
-      y: -0.7201545737599453
+      x: 0.5426775028634095
+      y: -0.7201545737599454
       z: -0.43229455616106627
       w: 0
     c3:
-      x: -3369284.5135476682
+      x: -3369284.513547668
       y: 4471174.1994811
       z: 3983266.361445753
       w: 1
