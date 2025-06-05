@@ -90,18 +90,18 @@ namespace EnerGeoCamera
 
         private void FlyToMarkerPosition()
         {
-            Vector2 currentViewAngle = _currentMarkerIndex >= _viewAngle.Count
-                ? new Vector2(0.0f, 0.0f)
-                : _viewAngle[_currentMarkerIndex];
-
-            _cameraFlyController.FlyToLocationLongitudeLatitudeHeight(
-                _currentMarker.GetMarkerGeolocation(),
-                currentViewAngle.x,
-                currentViewAngle.y,
-                false);
-            
-            _earthCamera.EnableSatelliteView = false;
-            _earthCamera.EnableRotation = true;
+            // Vector2 currentViewAngle = _currentMarkerIndex >= _viewAngle.Count
+            //     ? new Vector2(0.0f, 0.0f)
+            //     : _viewAngle[_currentMarkerIndex];
+            //
+            // _cameraFlyController.FlyToLocationLongitudeLatitudeHeight(
+            //     _currentMarker.GetMarkerGeolocation(),
+            //     currentViewAngle.x,
+            //     currentViewAngle.y,
+            //     false);
+            //
+            // _earthCamera.EnableSatelliteView = false;
+            // _earthCamera.EnableRotation = true;
         }
 
         private void ResetViewPoint()

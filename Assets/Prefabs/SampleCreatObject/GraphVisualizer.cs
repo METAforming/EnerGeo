@@ -35,7 +35,7 @@ public class GraphVisualizer : MonoBehaviour
     {
         if (data == null || data.Count == 0) return;
 
-        // ÃÖ´ë°ª ±¸ÇÏ±â
+        // ï¿½Ö´ë°ª ï¿½ï¿½ï¿½Ï±ï¿½
         float xMax = GetMaxX(data);
         float yMax = GetMaxY(data);
 
@@ -48,11 +48,11 @@ public class GraphVisualizer : MonoBehaviour
             float yPos = (point.value / yMax) * graphHeight;
             Vector2 anchoredPos = new Vector2(xPos, yPos);
 
-            // Á¡ »ý¼º
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             GameObject pointGO = Instantiate(pointPrefab, graphContainer);
             pointGO.GetComponent<RectTransform>().anchoredPosition = anchoredPos;
 
-            // ¼± »ý¼º
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (!isFirst)
             {
                 CreateLine(prevPos, anchoredPos);
@@ -89,7 +89,7 @@ public class GraphVisualizer : MonoBehaviour
 
         GameObject lineGO = Instantiate(linePrefab, graphContainer);
         RectTransform rt = lineGO.GetComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(distance, 3f); // ¼± µÎ²²
+        rt.sizeDelta = new Vector2(distance, 3f); // ï¿½ï¿½ ï¿½Î²ï¿½
         rt.anchoredPosition = pointA + dir * distance * 0.5f;
         rt.localEulerAngles = new Vector3(0, 0, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
     }
@@ -102,7 +102,7 @@ public class GraphVisualizer : MonoBehaviour
             float value = t * xMax;
             float x = t * graphWidth;
 
-            GameObject label = Instantiate(labelPrefab, graphContainer.parent);
+            GameObject label = Instantiate(labelPrefab, graphContainer);
             label.GetComponent<RectTransform>().anchoredPosition = new Vector2(x, -20f);
             label.GetComponent<Text>().text = $"{value:F1}";
         }
@@ -116,7 +116,7 @@ public class GraphVisualizer : MonoBehaviour
             float value = t * yMax;
             float y = t * graphHeight;
 
-            GameObject label = Instantiate(labelPrefab, graphContainer.parent);
+            GameObject label = Instantiate(labelPrefab, graphContainer);
             label.GetComponent<RectTransform>().anchoredPosition = new Vector2(-40f, y);
             label.GetComponent<Text>().text = $"{value:F0}%";
         }
