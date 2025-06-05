@@ -14,7 +14,13 @@ namespace EnerGeoCamera
 
         [Header("Camera Component")] 
         [SerializeField]
-        private bool _enableStaelliteView;
+        private bool _enableSatelliteView;
+
+        public bool EnableSatelliteView
+        {
+            get => _enableSatelliteView;
+            set => _enableSatelliteView = value;
+        }
 
         [SerializeField] [Range(0.1f, 1.0f)] 
         private float _initialViewWidth = 1.0f;
@@ -27,30 +33,43 @@ namespace EnerGeoCamera
         [SerializeField]
         private bool _enableMovement;
 
-        [SerializeField] private bool _enableRotation;
-        [SerializeField] private bool _enableDynamicSpeed;
-        [SerializeField] private bool _enableDynamicClippingPlanes;
-
         public bool EnableMovement
         {
             get => _enableMovement;
-            set
-            {
-                _enableMovement = value;
-                ResetSpeed();
-            }
+            set => _enableMovement = value;
         }
 
-        [SerializeField] [Min(0.0f)] private float _defaultMaximumSpeed;
-
-        [SerializeField] [Min(0.0f)] private float _dynamicSpeedMinHeight;
+        [SerializeField] private bool _enableRotation;
 
         public bool EnableRotation
         {
             get => _enableRotation;
-            set => _enableRotation = value;
+            set
+            {
+                ResetSpeed();
+                _enableRotation = value;
+            }
         }
+        
+        [SerializeField] private bool _enableDynamicSpeed;
+        public bool EnableDynamicSpeed
+        {
+            get => _enableDynamicSpeed;
+            set => _enableDynamicSpeed = value;
+        }
+        
+        [SerializeField] private bool _enableDynamicClippingPlanes;
+        public bool EnableDynamicClippingPlanes
+        {
+            get => _enableDynamicClippingPlanes;
+            set => _enableDynamicClippingPlanes = value;
+        }
+      
 
+        [SerializeField] [Min(0.0f)] private float _defaultMaximumSpeed;
+
+        [SerializeField] [Min(0.0f)] private float _dynamicSpeedMinHeight;
+        
         [SerializeField] [Min(0.0f)] private float _lookSpeed;
 
         [Space]
@@ -66,6 +85,8 @@ namespace EnerGeoCamera
 
         [SerializeField] private InputActionProperty _toggleDynamicSpeedAction;
 
+        [SerializeField] private InputActionProperty _toggleCameraViewState;
+
         [SerializeField] private InputActionProperty _speedResetAction;
 
         [SerializeField] private InputActionProperty _speedChangeAction;
@@ -78,12 +99,12 @@ namespace EnerGeoCamera
         private float _initialNearClipPlane;
         private float _initialFarClipPlane;
 
-        // Cesium 좌표계 변환에 필요한 컴포넌트
+        // Essential components for transforming between Cesium coordinate system and Unity coordinate system
         private CharacterController _controller;
         private CesiumGeoreference _georeference;
         private CesiumGlobeAnchor _globeAnchor;
 
-        // 카메라 이동 관련
+        // Camera movement related variables
         private Vector3 _velocity = Vector3.zero;
         private float _acceleration = 20000.0f;
         private float _deceleration = 9999999959.0f;
@@ -94,7 +115,7 @@ namespace EnerGeoCamera
         private float _speedMultiplierIncrement = 1.5f;
         private AnimationCurve _maxSpeedCurve;
 
-        // 카메라 클립 평면 조정 값
+        // Hard-coded values for adjusting clipping plane size dynamically
         private float _dynamicClippingPlanesMinHeight = 10000.0f;
         private float _maximumFarClipPlane = 500000000.0f;
         private float _maximumNearToFarRatio = 100000.0f;
@@ -154,6 +175,16 @@ namespace EnerGeoCamera
             }
         }
 
+        private void Update()
+        {
+            // TODO: Delete this block when finished implementing `performed` input function
+            if (Keyboard.current.vKey.wasPressedThisFrame)
+            {
+                _enableSatelliteView = !_enableSatelliteView;
+                _enableRotation = !_enableRotation;
+            }
+        }
+
         #endregion
 
         #region Intialization
@@ -163,7 +194,7 @@ namespace EnerGeoCamera
             _camera = gameObject.GetComponent<Camera>();
             _camera.rect = new Rect(0f, 0f, _initialViewWidth, _initialViewHeight);
 
-            // 카메라 View frustum 조정
+            // Adjust camera view frustum
             _initialNearClipPlane = _camera.nearClipPlane;
             _initialFarClipPlane = _camera.farClipPlane;
         }
@@ -229,6 +260,8 @@ namespace EnerGeoCamera
             Vector2 lookInput = _lookAction.action.ReadValue<Vector2>();
             float inputHorizontal = lookInput.x;
             float inputVertical = lookInput.y;
+            
+            bool toggleCameraViewState = _toggleCameraViewState.action.ReadValue<float>() > 0.5f;
 
             // Handle keyboard inputs for managing camera movement speed
             bool toggleDynamicSpeed = _toggleDynamicSpeedAction.action.ReadValue<float>() > 0.5f;
@@ -249,6 +282,16 @@ namespace EnerGeoCamera
             {
                 _enableDynamicSpeed = !_enableDynamicSpeed;
             }
+
+            // FIXME:
+            // Uncomment this block when finished implementing `performed` input function
+
+            // if (toggleCameraViewState)
+            // {
+            //     Debug.Log("Toggle Camera view");
+            //     _enableSatelliteView = !_enableSatelliteView;
+            //     _enableRotation = !_enableRotation;
+            // }
 
             if (inputSpeedReset || (_enableDynamicSpeed && movementInput == Vector3.zero))
             {
@@ -327,7 +370,7 @@ namespace EnerGeoCamera
 
         private void Move(Vector3 movementInput)
         {
-            Vector3 inputDirection = _enableStaelliteView
+            Vector3 inputDirection = _enableSatelliteView
                 ? transform.right * movementInput.x + transform.up * movementInput.y
                 : transform.right * movementInput.x + transform.forward * movementInput.y;
 
@@ -340,7 +383,7 @@ namespace EnerGeoCamera
                 double3 upECEF = _georeference.ellipsoid.GeodeticSurfaceNormal(positionECEF);
                 double3 upUnity = _georeference.TransformEarthCenteredEarthFixedDirectionToUnity(upECEF);
 
-                inputDirection = _enableStaelliteView
+                inputDirection = _enableSatelliteView
                     ? (float3)inputDirection + (float3)upUnity * -movementInput.z
                     : (float3)inputDirection + (float3)upUnity * movementInput.z;
             }
@@ -389,9 +432,9 @@ namespace EnerGeoCamera
 
             if (!HasInputAction(_moveAction))
             {
-                // 기본적으로 왼손 VR 컨트롤러로 조작
+                // Basically control using left hand xr controller 
                 InputAction newMoveAction = map.AddAction("move", binding: "<XRController>{LeftHand}/thumbstick");
-                // 키보드 조작 추가
+                // Add keyboard inputs
                 newMoveAction.AddCompositeBinding("2DVector")
                     .With("Up", "<Keyboard>/w")
                     .With("Down", "<Keyboard>/s")
@@ -436,10 +479,20 @@ namespace EnerGeoCamera
                 _speedResetAction = new InputActionProperty(newSpeedResetAction);
             }
 
+            // TODO:
+            // Implementing custom `performed` function for invoking input functions per click needed
+            
+            // if (!HasInputAction(_toggleCameraViewState))
+            // {
+            //     InputAction newToggleCameraViewState = map.AddAction("toggleCameraViewState", binding: "<keyboard>/v");
+            //     _toggleCameraViewState = new InputActionProperty(newToggleCameraViewState);
+            // }
+
             _moveAction.action.Enable();
             _zoomAction.action.Enable();
             _lookAction.action.Enable();
             _toggleDynamicSpeedAction.action.Enable();
+            // _toggleCameraViewState.action.Enable();
             _speedChangeAction.action.Enable();
             _speedResetAction.action.Enable();
         }
