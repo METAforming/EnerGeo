@@ -23,12 +23,28 @@ while True:
         print(" Unity로부터 받은 명령:", line)
 
         prompt = (
-            "다음 명령을 JSON 형식으로만 출력하세요.\n"
-            "절대 설명 없이 JSON만 출력하세요.\n"
-            "출력 예시:\n"
-            "{ \"action\": \"move\", \"objectName\": \"Cube\", \"position\": {\"x\": 1, \"y\": 0, \"z\": 1} }\n"
-            f"명령: {line}"
-        )
+    "다음 명령을 JSON 형식으로만 출력하세요. 절대 설명 없이 JSON만 출력하세요.\n\n"
+
+    "오브젝트를 생성할 경우:\n"
+    "{ \"action\": \"create\", \"objectName\": \"Cube\", \"position\": {\"x\": 1, \"y\": 0, \"z\": 1} }\n"
+
+    "오브젝트를 이동할 경우:\n"
+    "{ \"action\": \"move\", \"objectName\": \"Cube\", \"position\": {\"x\": 2, \"y\": 0, \"z\": 1} }\n"
+
+    "오브젝트를 삭제할 경우:\n"
+    "{ \"action\": \"delete\", \"objectName\": \"Cube\", \"position\": {\"x\": 0, \"y\": 0, \"z\": 0} }\n"
+
+    "지도에 마커를 표시할 경우:\n"
+    "{ \"markers\": [ {\"x\": 0.3, \"y\": 0.6}, {\"x\": 0.7, \"y\": 0.4} ] }\n"
+
+    "그래프를 그릴 경우:\n"
+    "{ \"unit\": \"%\", \"points\": [ {\"time\": 1, \"value\": 50}, {\"time\": 2, \"value\": 70} ] }\n"
+
+    "비교 분석일 경우:\n"
+    "{ \"headers\": [\"지역\", \"발전 효율\"], \"rows\": [[\"제주도\", \"78%\"], [\"울릉도\", \"62%\"]] }\n\n"
+
+    f"명령: {line}"
+)
 
         payload = {
             "model": "gemma3:12b",

@@ -12,6 +12,10 @@ public class PythonBridge : MonoBehaviour
     public InputField commandInput;
     public GameObject cubePrefab;
 
+    public MapMarkerManager markerManager;
+    public GraphVisualizer graphVisualizer;
+    public ComparisonTableUI comparisonTable;
+
     private TcpClient client;
     private NetworkStream stream;
     private Thread receiveThread;
@@ -48,7 +52,7 @@ public class PythonBridge : MonoBehaviour
 
     void ReceiveData()
     {
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[4096];
         while (true)
         {
             try
@@ -86,35 +90,76 @@ public class PythonBridge : MonoBehaviour
     {
         Debug.Log("?? JSON 수신: " + data);
 
-        Command cmd = JsonConvert.DeserializeObject<Command>(data);
-        if (cmd != null)
+        // 마커
+        if (data.Contains("\"markers\""))
         {
-            Vector3 pos = new Vector3(cmd.position.x, cmd.position.y, cmd.position.z);
-            string action = cmd.action.ToLower();
+            markerManager.ShowMarkersFromJson(data);
+        }
+        // 그래프
+        else if (data.Contains("\"points\""))
+        {
+            try
+            {
+                PointDataListWrapper wrapper = JsonConvert.DeserializeObject<PointDataListWrapper>(data);
+                if (wrapper != null && wrapper.points != null)
+                {
+                    graphVisualizer.PlotGraph(wrapper.points);
+                }
+                else
+                {
+                    Debug.LogWarning("?? 그래프 데이터가 비어 있습니다.");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("?? 그래프 JSON 파싱 실패: " + e.Message);
+            }
+        }
+        // 비교 표
+        else if (data.Contains("\"headers\"") && data.Contains("\"rows\""))
+        {
+            comparisonTable.BuildTable(data);
+        }
+        // 기본 오브젝트 생성 명령
+        else
+        {
+            try
+            {
+                Command cmd = JsonConvert.DeserializeObject<Command>(data);
+                if (cmd != null)
+                {
+                    Vector3 pos = new Vector3(cmd.position.x, cmd.position.y, cmd.position.z);
+                    string action = cmd.action.ToLower();
 
-            if (action == "create")
-            {
-                GameObject obj = Instantiate(cubePrefab, pos, Quaternion.identity);
-                obj.name = cmd.objectName;
-                Debug.Log("? Cube 생성됨: " + pos);
-            }
-            else if (action == "move")
-            {
-                GameObject obj = GameObject.Find(cmd.objectName) ?? GameObject.Find(cmd.objectName + "(Clone)");
-                if (obj != null)
-                {
-                    obj.transform.position = pos;
-                    Debug.Log("? Cube 이동됨: " + pos);
+                    if (action == "create")
+                    {
+                        GameObject obj = Instantiate(cubePrefab, pos, Quaternion.identity);
+                        obj.name = cmd.objectName;
+                        Debug.Log("?? Cube 생성됨: " + pos);
+                    }
+                    else if (action == "move")
+                    {
+                        GameObject obj = GameObject.Find(cmd.objectName) ?? GameObject.Find(cmd.objectName + "(Clone)");
+                        if (obj != null)
+                        {
+                            obj.transform.position = pos;
+                            Debug.Log("?? Cube 이동됨: " + pos);
+                        }
+                    }
+                    else if (action == "delete")
+                    {
+                        GameObject obj = GameObject.Find(cmd.objectName) ?? GameObject.Find(cmd.objectName + "(Clone)");
+                        if (obj != null)
+                        {
+                            Destroy(obj);
+                            Debug.Log("? Cube 삭제됨");
+                        }
+                    }
                 }
             }
-            else if (action == "delete")
+            catch (Exception e)
             {
-                GameObject obj = GameObject.Find(cmd.objectName) ?? GameObject.Find(cmd.objectName + "(Clone)");
-                if (obj != null)
-                {
-                    Destroy(obj);
-                    Debug.Log("? Cube 삭제됨");
-                }
+                Debug.LogWarning("?? 일반 명령 파싱 실패: " + e.Message);
             }
         }
     }
